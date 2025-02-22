@@ -10,4 +10,10 @@ interface CoinGeckoApi {
         @Query("vs_currency") currency: String = "usd",
         @Query("days") days: Int = 1
     ): BitcoinPriceResponse
+
+    @GET("api/v3/coins/ethereum/market_chart")
+    suspend fun getEthereumPrices(
+        @Query("vs_currency") currency: String = "usd",
+        @Query("days") days: Int = 1
+    ): BitcoinPriceResponse
 } 

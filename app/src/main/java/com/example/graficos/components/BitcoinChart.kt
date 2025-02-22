@@ -1,10 +1,10 @@
 package com.example.graficos.components
 
-import android.graphics.Color
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.graficos.data.BitcoinPrice
 import com.github.mikephil.charting.charts.LineChart
@@ -14,11 +14,14 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.ui.graphics.Color as ComposeColor
+import android.graphics.Color as AndroidColor
 
 @Composable
 fun BitcoinChart(
     prices: List<BitcoinPrice>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lineColor: ComposeColor = ComposeColor(0xFF1E88E5)
 ) {
     AndroidView(
         modifier = modifier,
@@ -40,9 +43,9 @@ fun BitcoinChart(
                 // Configuración del eje X
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
-                    textColor = Color.WHITE
+                    textColor = AndroidColor.WHITE
                     setDrawGridLines(true)
-                    gridColor = Color.parseColor("#333333") // Líneas de la cuadrícula más oscuras
+                    gridColor = AndroidColor.parseColor("#333333")
                     valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
                         private val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
                         override fun getFormattedValue(value: Float): String {
@@ -53,9 +56,9 @@ fun BitcoinChart(
                 
                 // Configuración del eje Y izquierdo
                 axisLeft.apply {
-                    textColor = Color.WHITE
+                    textColor = AndroidColor.WHITE
                     setDrawGridLines(true)
-                    gridColor = Color.parseColor("#333333") // Líneas de la cuadrícula más oscuras
+                    gridColor = AndroidColor.parseColor("#333333")
                 }
                 
                 // Desactivar eje Y derecho
@@ -63,34 +66,31 @@ fun BitcoinChart(
                 
                 // Configuración de la leyenda
                 legend.apply {
-                    textColor = Color.WHITE
+                    textColor = AndroidColor.WHITE
                     textSize = 14f
                 }
                 
                 // Color de fondo
-                setBackgroundColor(Color.BLACK)
+                setBackgroundColor(AndroidColor.BLACK)
             }
         },
         update = { chart ->
-            // Crear entradas para el gráfico
             val entries = prices.map { price ->
                 Entry(price.timestamp.toFloat(), price.price.toFloat())
             }
             
-            // Crear y configurar el conjunto de datos
-            val dataSet = LineDataSet(entries, "Bitcoin Price").apply {
-                color = Color.rgb(30, 136, 229)      // Línea azul
+            val dataSet = LineDataSet(entries, "Price").apply {
+                color = lineColor.toArgb()
                 setDrawCircles(false)
                 lineWidth = 2f
                 setDrawFilled(true)
-                fillColor = Color.rgb(30, 136, 229)  // Relleno azul
-                fillAlpha = 50                       // Más opacidad en el relleno
-                valueTextColor = Color.WHITE
+                fillColor = lineColor.toArgb()
+                fillAlpha = 50
+                valueTextColor = AndroidColor.WHITE
                 setDrawValues(false)
-                mode = LineDataSet.Mode.CUBIC_BEZIER // Línea más suave
+                mode = LineDataSet.Mode.CUBIC_BEZIER
             }
             
-            // Actualizar datos del gráfico
             chart.data = LineData(dataSet)
             chart.invalidate()
         }

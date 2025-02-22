@@ -17,8 +17,11 @@ class BitcoinViewModel : ViewModel() {
         .build()
         .create(CoinGeckoApi::class.java)
 
-    private val _prices = MutableStateFlow<List<BitcoinPrice>>(emptyList())
-    val prices = _prices.asStateFlow()
+    private val _bitcoinPrices = MutableStateFlow<List<BitcoinPrice>>(emptyList())
+    val bitcoinPrices = _bitcoinPrices.asStateFlow()
+
+    private val _ethereumPrices = MutableStateFlow<List<BitcoinPrice>>(emptyList())
+    val ethereumPrices = _ethereumPrices.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -27,17 +30,27 @@ class BitcoinViewModel : ViewModel() {
     val error = _error.asStateFlow()
 
     init {
-        loadBitcoinPrices()
+        loadPrices()
     }
 
-    fun loadBitcoinPrices() {
+    fun loadPrices() {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
                 _error.value = null
                 
-                val response = api.getBitcoinPrices()
-                _prices.value = response.prices.map { 
+                // Cargar Bitcoin
+                val bitcoinResponse = api.getBitcoinPrices()
+                _bitcoinPrices.value = bitcoinResponse.prices.map { 
+                    BitcoinPrice(
+                        timestamp = it[0].toLong(),
+                        price = it[1]
+                    )
+                }
+
+                // Cargar Ethereum
+                val ethereumResponse = api.getEthereumPrices()
+                _ethereumPrices.value = ethereumResponse.prices.map { 
                     BitcoinPrice(
                         timestamp = it[0].toLong(),
                         price = it[1]

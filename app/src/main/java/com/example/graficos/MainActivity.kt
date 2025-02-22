@@ -44,7 +44,8 @@ class MainActivity : ComponentActivity() {
 fun BitcoinPriceScreen(
     viewModel: BitcoinViewModel = viewModel()
 ) {
-    val prices by viewModel.prices.collectAsState()
+    val bitcoinPrices by viewModel.bitcoinPrices.collectAsState()
+    val ethereumPrices by viewModel.ethereumPrices.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
@@ -55,7 +56,7 @@ fun BitcoinPriceScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Bitcoin Price Chart",
+            text = "Cryptocurrency Charts",
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -76,27 +77,37 @@ fun BitcoinPriceScreen(
                 )
             }
             else -> {
-                // Chart will go here
-                Box(
+                Column(
                     modifier = Modifier
+                        .fillMaxSize()
                         .weight(1f)
-                        .fillMaxWidth()
                 ) {
-                    BitcoinChart(
-                        prices = prices,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                    // Bitcoin Section
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        CryptoSection(
+                            title = "Bitcoin",
+                            prices = bitcoinPrices,
+                            color = Color(0xFFF7931A)
+                        )
+                    }
 
-                // Price cards
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(prices) { price ->
-                        PriceCard(price)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Ethereum Section
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        CryptoSection(
+                            title = "Ethereum",
+                            prices = ethereumPrices,
+                            color = Color(0xFF627EEA)
+                        )
                     }
                 }
             }
@@ -105,7 +116,57 @@ fun BitcoinPriceScreen(
 }
 
 @Composable
-fun PriceCard(price: BitcoinPrice) {
+fun CryptoSection(
+    title: String,
+    prices: List<BitcoinPrice>,
+    color: Color
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        Text(
+            text = "$title Price Chart",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+        ) {
+            BitcoinChart(
+                prices = prices,
+                modifier = Modifier.fillMaxSize(),
+                lineColor = color
+            )
+        }
+
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(prices) { price ->
+                PriceCard(
+                    price = price,
+                    cryptoName = title,
+                    accentColor = color
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PriceCard(
+    price: BitcoinPrice,
+    cryptoName: String,
+    accentColor: Color
+) {
     Card(
         modifier = Modifier
             .width(160.dp)
@@ -119,9 +180,9 @@ fun PriceCard(price: BitcoinPrice) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Bitcoin",
+                text = cryptoName,
                 style = MaterialTheme.typography.labelLarge,
-                color = Color(0xFF1E88E5),
+                color = accentColor,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(

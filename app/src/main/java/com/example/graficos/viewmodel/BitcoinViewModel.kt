@@ -1,6 +1,8 @@
 package com.example.graficos.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.content.Context
+import android.content.Intent
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.graficos.api.CoinGeckoApi
 import com.example.graficos.data.BitcoinPrice
@@ -11,8 +13,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.graficos.api.CryptoNewsApi
 import com.example.graficos.data.NewsArticle
+import com.example.graficos.service.NewsNotificationService
+import com.example.graficos.utils.NotificationPermissionHelper
+import android.os.Build
+import android.app.Application
 
-class BitcoinViewModel : ViewModel() {
+class BitcoinViewModel(application: Application) : AndroidViewModel(application) {
     private val api = Retrofit.Builder()
         .baseUrl("https://api.coingecko.com/")
         .addConverterFactory(GsonConverterFactory.create())
@@ -46,9 +52,30 @@ class BitcoinViewModel : ViewModel() {
     private val _errorNews = MutableStateFlow<String?>(null)
     val errorNews = _errorNews.asStateFlow()
 
+    private val _notificationsEnabled = MutableStateFlow(true)
+    val notificationsEnabled = _notificationsEnabled.asStateFlow()
+
     init {
         loadPrices()
         loadNews()
+        viewModelScope.launch {
+            try {
+                val context = getApplication<Application>()
+                if (NotificationPermissionHelper.hasNotificationPermission(context)) {
+                    val intent = Intent(context, NewsNotificationService::class.java).apply {
+                        action = NewsNotificationService.ACTION_START_SERVICE
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(intent)
+                    } else {
+                        context.startService(intent)
+                    }
+                }
+            } catch (e: Exception) {
+                _errorNews.value = "Error al iniciar el servicio de notificaciones"
+                _notificationsEnabled.value = false
+            }
+        }
     }
 
     fun loadPrices() {
@@ -94,6 +121,33 @@ class BitcoinViewModel : ViewModel() {
             } finally {
                 _isLoadingNews.value = false
             }
+        }
+    }
+
+    fun toggleNotifications(context: Context) {
+        if (!NotificationPermissionHelper.hasNotificationPermission(context)) {
+            _errorNews.value = "Se requieren permisos de notificación"
+            return
+        }
+
+        try {
+            _notificationsEnabled.value = !_notificationsEnabled.value
+            
+            val intent = Intent(context, NewsNotificationService::class.java).apply {
+                action = if (_notificationsEnabled.value) {
+                    NewsNotificationService.ACTION_START_SERVICE
+                } else {
+                    NewsNotificationService.ACTION_STOP_SERVICE
+                }
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } catch (e: Exception) {
+            _notificationsEnabled.value = false
+            _errorNews.value = "Error al iniciar el servicio de notificaciones"
         }
     }
 } 

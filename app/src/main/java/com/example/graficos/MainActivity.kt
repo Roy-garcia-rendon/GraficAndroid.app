@@ -45,10 +45,36 @@ import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import com.example.graficos.screens.ConversorScreen
 import com.example.graficos.screens.NewsScreen
+import android.Manifest
+import android.os.Build
+import com.example.graficos.utils.NotificationPermissionHelper
+import android.content.pm.PackageManager
+import com.example.graficos.utils.WelcomeNotificationHelper
+import androidx.activity.result.contract.ActivityResultContracts
+import android.app.Application
+import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : ComponentActivity() {
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            WelcomeNotificationHelper.showWelcomeNotification(this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Solicitar permisos solo si no los tenemos
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !NotificationPermissionHelper.hasNotificationPermission(this)) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            // Mostrar notificación de bienvenida si tenemos permisos
+            WelcomeNotificationHelper.showWelcomeNotification(this)
+        }
+        
         setContent {
             GraficosTheme {
                 Surface(
@@ -60,11 +86,19 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    companion object {
+        private const val NOTIFICATION_PERMISSION_CODE = 123
+    }
 }
 
 @Composable
 fun BitcoinPriceScreen(
-    viewModel: BitcoinViewModel = viewModel()
+    viewModel: BitcoinViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+            LocalContext.current.applicationContext as Application
+        )
+    )
 ) {
     val bitcoinPrices by viewModel.bitcoinPrices.collectAsState()
     val ethereumPrices by viewModel.ethereumPrices.collectAsState()
@@ -131,6 +165,8 @@ fun BitcoinPriceScreen(
                             .background(Color(0xFF1E1E1E))
                             .padding(vertical = 8.dp)
                     ) {
+                        val context = LocalContext.current
+                        
                         // Opción BitTrend (muestra ambas)
                         DropdownMenuItem(
                             text = { 
@@ -220,13 +256,34 @@ fun BitcoinPriceScreen(
                             )
                         )
 
+                        // Opción de Notificaciones
+                        val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
+                        DropdownMenuItem(
+                            text = { 
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        if (notificationsEnabled) "Desactivar Notificaciones" else "Activar Notificaciones",
+                                        color = Color.White
+                                    )
+                                }
+                            },
+                            onClick = { 
+                                viewModel.toggleNotifications(context)
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+
                         Divider(
                             color = Color(0xFF333333),
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
 
                         // Opción GitHub
-                        val context = LocalContext.current
                         DropdownMenuItem(
                             text = { 
                                 Row(

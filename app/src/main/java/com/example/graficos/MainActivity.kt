@@ -43,6 +43,8 @@ import androidx.compose.foundation.layout.width
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
+import com.example.graficos.screens.ConversorScreen
+import com.example.graficos.screens.NewsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,207 +75,255 @@ fun BitcoinPriceScreen(
     var showMenu by remember { mutableStateOf(false) }
     // Estado para controlar qué criptomoneda mostrar
     var selectedCrypto by remember { mutableStateOf("ALL") }
+    var showConversor by remember { mutableStateOf(false) }
+    var showNews by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(16.dp)
-    ) {
-        // Barra superior con título y menú
-        Row(
+    if (showConversor) {
+        ConversorScreen(
+            viewModel = viewModel,
+            onBack = { showConversor = false }
+        )
+    } else if (showNews) {
+        NewsScreen(
+            viewModel = viewModel,
+            onBack = { showNews = false }
+        )
+    } else {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(16.dp)
         ) {
-            Text(
-                text = "BitTrend",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White
-            )
-            
-            // Botón del menú con ícono de tres puntos
-            Box {
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menu",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+            // Barra superior con título y menú
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "BitTrend",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White
+                )
                 
-                // Menú desplegable con fondo oscuro
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false },
-                    modifier = Modifier
-                        .background(Color(0xFF1E1E1E))
-                        .padding(vertical = 8.dp)
-                ) {
-                    // Opción BitTrend (muestra ambas)
-                    DropdownMenuItem(
-                        text = { 
-                            Text(
-                                "BitTrend",
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        },
-                        onClick = { 
-                            selectedCrypto = "ALL"
-                            showMenu = false
-                        },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color.White
+                // Botón del menú con ícono de tres puntos
+                Box {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Menu",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
-                    )
+                    }
                     
-                    // Opción Bitcoin
-                    DropdownMenuItem(
-                        text = { 
-                            Text(
-                                "Bitcoin",
-                                color = Color.White
-                            )
-                        },
-                        onClick = { 
-                            selectedCrypto = "BTC"
-                            showMenu = false
-                        },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color.White
-                        )
-                    )
-                    
-                    // Opción Ethereum
-                    DropdownMenuItem(
-                        text = { 
-                            Text(
-                                "Ethereum",
-                                color = Color.White
-                            )
-                        },
-                        onClick = { 
-                            selectedCrypto = "ETH"
-                            showMenu = false
-                        },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color.White
-                        )
-                    )
-
-                    Divider(
-                        color = Color(0xFF333333),
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-                    // Opción GitHub
-                    val context = LocalContext.current
-                    DropdownMenuItem(
-                        text = { 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Info,
-                                    contentDescription = "GitHub",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                    // Menú desplegable con fondo oscuro
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                        modifier = Modifier
+                            .background(Color(0xFF1E1E1E))
+                            .padding(vertical = 8.dp)
+                    ) {
+                        // Opción BitTrend (muestra ambas)
+                        DropdownMenuItem(
+                            text = { 
                                 Text(
-                                    "GitHub",
+                                    "BitTrend",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            },
+                            onClick = { 
+                                selectedCrypto = "ALL"
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+                        
+                        // Opción Bitcoin
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    "Bitcoin",
                                     color = Color.White
                                 )
-                            }
-                        },
-                        onClick = { 
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Roy-garcia-rendon"))
-                            context.startActivity(intent)
-                            showMenu = false
-                        },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color.White
+                            },
+                            onClick = { 
+                                selectedCrypto = "BTC"
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
                         )
-                    )
+                        
+                        // Opción Ethereum
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    "Ethereum",
+                                    color = Color.White
+                                )
+                            },
+                            onClick = { 
+                                selectedCrypto = "ETH"
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+
+                        // Opción Conversor
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    "Conversor",
+                                    color = Color.White
+                                )
+                            },
+                            onClick = { 
+                                showConversor = true
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+
+                        // Opción Noticias
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    "Noticias",
+                                    color = Color.White
+                                )
+                            },
+                            onClick = { 
+                                showNews = true
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+
+                        Divider(
+                            color = Color(0xFF333333),
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        // Opción GitHub
+                        val context = LocalContext.current
+                        DropdownMenuItem(
+                            text = { 
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Info,
+                                        contentDescription = "GitHub",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "GitHub",
+                                        color = Color.White
+                                    )
+                                }
+                            },
+                            onClick = { 
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Roy-garcia-rendon"))
+                                context.startActivity(intent)
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+                    }
                 }
             }
-        }
 
-        when {
-            isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            error != null -> {
-                Text(
-                    text = "Error: $error",
-                    color = Color.Red,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f)
-                ) {
-                    when (selectedCrypto) {
-                        "ALL" -> {
-                            // Mostrar ambas criptomonedas
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                            ) {
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                error != null -> {
+                    Text(
+                        text = "Error: $error",
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                    ) {
+                        when (selectedCrypto) {
+                            "ALL" -> {
+                                // Mostrar ambas criptomonedas
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                ) {
+                                    CryptoSection(
+                                        title = "Bitcoin",
+                                        prices = bitcoinPrices,
+                                        color = Color(0xFFF7931A)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                ) {
+                                    CryptoSection(
+                                        title = "Ethereum",
+                                        prices = ethereumPrices,
+                                        color = Color(0xFF627EEA)
+                                    )
+                                }
+                            }
+                            "BTC" -> {
+                                // Mostrar solo Bitcoin
                                 CryptoSection(
                                     title = "Bitcoin",
                                     prices = bitcoinPrices,
                                     color = Color(0xFFF7931A)
                                 )
                             }
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                            ) {
+                            "ETH" -> {
+                                // Mostrar solo Ethereum
                                 CryptoSection(
                                     title = "Ethereum",
                                     prices = ethereumPrices,
                                     color = Color(0xFF627EEA)
                                 )
                             }
-                        }
-                        "BTC" -> {
-                            // Mostrar solo Bitcoin
-                            CryptoSection(
-                                title = "Bitcoin",
-                                prices = bitcoinPrices,
-                                color = Color(0xFFF7931A)
-                            )
-                        }
-                        "ETH" -> {
-                            // Mostrar solo Ethereum
-                            CryptoSection(
-                                title = "Ethereum",
-                                prices = ethereumPrices,
-                                color = Color(0xFF627EEA)
-                            )
                         }
                     }
                 }

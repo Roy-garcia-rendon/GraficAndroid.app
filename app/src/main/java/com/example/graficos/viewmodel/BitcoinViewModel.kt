@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.example.graficos.api.CryptoNewsApi
+import com.example.graficos.data.NewsArticle
 
 class BitcoinViewModel : ViewModel() {
     private val api = Retrofit.Builder()
@@ -16,6 +18,12 @@ class BitcoinViewModel : ViewModel() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(CoinGeckoApi::class.java)
+
+    private val newsApi = Retrofit.Builder()
+        .baseUrl("https://min-api.cryptocompare.com/data/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(CryptoNewsApi::class.java)
 
     private val _bitcoinPrices = MutableStateFlow<List<BitcoinPrice>>(emptyList())
     val bitcoinPrices = _bitcoinPrices.asStateFlow()
@@ -29,8 +37,18 @@ class BitcoinViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
+    private val _news = MutableStateFlow<List<NewsArticle>>(emptyList())
+    val news = _news.asStateFlow()
+
+    private val _isLoadingNews = MutableStateFlow(false)
+    val isLoadingNews = _isLoadingNews.asStateFlow()
+
+    private val _errorNews = MutableStateFlow<String?>(null)
+    val errorNews = _errorNews.asStateFlow()
+
     init {
         loadPrices()
+        loadNews()
     }
 
     fun loadPrices() {
@@ -60,6 +78,21 @@ class BitcoinViewModel : ViewModel() {
                 _error.value = e.message
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun loadNews() {
+        viewModelScope.launch {
+            try {
+                _isLoadingNews.value = true
+                _errorNews.value = null
+                val response = newsApi.getNews()
+                _news.value = response.Data
+            } catch (e: Exception) {
+                _errorNews.value = e.message
+            } finally {
+                _isLoadingNews.value = false
             }
         }
     }

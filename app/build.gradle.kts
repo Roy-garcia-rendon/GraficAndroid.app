@@ -70,4 +70,7 @@ dependencies {
     
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }

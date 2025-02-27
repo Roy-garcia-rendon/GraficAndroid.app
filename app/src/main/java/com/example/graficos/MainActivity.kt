@@ -53,6 +53,8 @@ import com.example.graficos.utils.WelcomeNotificationHelper
 import androidx.activity.result.contract.ActivityResultContracts
 import android.app.Application
 import androidx.lifecycle.ViewModelProvider
+import com.example.graficos.screens.SimulatorScreen
+import com.example.graficos.viewmodel.SimulatorViewModel
 
 class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
@@ -100,6 +102,13 @@ fun BitcoinPriceScreen(
         )
     )
 ) {
+    // Crear una instancia separada del SimulatorViewModel
+    val simulatorViewModel: SimulatorViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+            LocalContext.current.applicationContext as Application
+        )
+    )
+    
     val bitcoinPrices by viewModel.bitcoinPrices.collectAsState()
     val ethereumPrices by viewModel.ethereumPrices.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -111,6 +120,7 @@ fun BitcoinPriceScreen(
     var selectedCrypto by remember { mutableStateOf("ALL") }
     var showConversor by remember { mutableStateOf(false) }
     var showNews by remember { mutableStateOf(false) }
+    var showSimulator by remember { mutableStateOf(false) }
 
     if (showConversor) {
         ConversorScreen(
@@ -121,6 +131,11 @@ fun BitcoinPriceScreen(
         NewsScreen(
             viewModel = viewModel,
             onBack = { showNews = false }
+        )
+    } else if (showSimulator) {
+        SimulatorScreen(
+            viewModel = simulatorViewModel,
+            onBack = { showSimulator = false }
         )
     } else {
         Column(
@@ -249,6 +264,23 @@ fun BitcoinPriceScreen(
                             },
                             onClick = { 
                                 showNews = true
+                                showMenu = false
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = Color.White
+                            )
+                        )
+
+                        // Opción Simulador
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    "Simulador",
+                                    color = Color.White
+                                )
+                            },
+                            onClick = { 
+                                showSimulator = true
                                 showMenu = false
                             },
                             colors = MenuDefaults.itemColors(

@@ -32,11 +32,22 @@ class SimulatorViewModel(application: Application) : AndroidViewModel(applicatio
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
+    private var lastRequestTime = 0L
+    private val MIN_REQUEST_INTERVAL = 30000L // 30 segundos entre solicitudes
+
     fun runBacktest(symbol: String, interval: String) {
         viewModelScope.launch {
             try {
+                // Verificar el tiempo desde la última solicitud
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastRequestTime < MIN_REQUEST_INTERVAL) {
+                    _error.value = "Por favor, espera 30 segundos entre simulaciones"
+                    return@launch
+                }
+
                 _isLoading.value = true
                 _error.value = null
+                lastRequestTime = currentTime
 
                 // Calcular rango de fechas (últimos 30 días)
                 val endTime = Calendar.getInstance().timeInMillis / 1000
@@ -49,12 +60,26 @@ class SimulatorViewModel(application: Application) : AndroidViewModel(applicatio
                     else -> throw IllegalArgumentException("Símbolo no soportado")
                 }
 
-                // Obtener datos históricos
-                val response = api.getHistoricalData(
-                    id = coinId,
-                    from = startTime,
-                    to = endTime
-                )
+                // Obtener datos históricos con manejo de errores específico
+                val response = try {
+                    api.getHistoricalData(
+                        id = coinId,
+                        from = startTime,
+                        to = endTime
+                    )
+                } catch (e: Exception) {
+                    when {
+                        e.message?.contains("429") == true -> {
+                            _error.value = "Límite de solicitudes alcanzado. Por favor, espera unos minutos."
+                            return@launch
+                        }
+                        e.message?.contains("Unable to resolve host") == true -> {
+                            _error.value = "Error de conexión. Verifica tu conexión a internet."
+                            return@launch
+                        }
+                        else -> throw e
+                    }
+                }
 
                 // Convertir datos a velas
                 val candles = response.prices.map { price ->
@@ -117,6 +142,8 @@ class SimulatorViewModel(application: Application) : AndroidViewModel(applicatio
                 e.printStackTrace()
                 _error.value = when {
                     e is IllegalArgumentException -> e.message
+                    e.message?.contains("429") == true -> 
+                        "Límite de solicitudes alcanzado. Por favor, espera unos minutos."
                     e.message?.contains("Unable to resolve host") == true -> 
                         "Error de conexión. Verifica tu conexión a internet."
                     else -> "Error al ejecutar el backtest: ${e.message}"
@@ -192,5 +219,9 @@ class SimulatorViewModel(application: Application) : AndroidViewModel(applicatio
         }
 
         return trades
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 } 
